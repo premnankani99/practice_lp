@@ -35,9 +35,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // Prevents "baar baar api call" when switching tabs
+      refetchOnWindowFocus: true, // Instantly update when switching tabs
       retry: 1, // Reduces red marks in network tab (fails fast instead of retrying 3 times)
-      staleTime: 5 * 60 * 1000, // Caches data for 5 minutes
+      staleTime: 0, // Never cache data, always fetch instantly on navigation
     },
   },
 });
