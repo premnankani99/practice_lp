@@ -4,6 +4,8 @@ import KpiCards from '../components/dashboard/KpiCards';
 import RequestBreakdown from '../components/dashboard/RequestBreakdown';
 import RecentRequests from '../components/dashboard/RecentRequests';
 
+import AdvancedAnalytics from '../components/dashboard/AdvancedAnalytics';
+
 export default function AdminDashboard() {
   const { 
     allRequests, 
@@ -19,6 +21,9 @@ export default function AdminDashboard() {
     <div className="max-w-7xl mx-auto w-full min-h-[calc(100vh-8rem)] flex flex-col space-y-6 font-sans pb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <DashboardHeader pendingVerifsCount={pendingVerifs.length} />
       <KpiCards kpis={kpis} />
+      
+      {/* Analytics Section */}
+      <AdvancedAnalytics allRequests={allRequests} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <RequestBreakdown 
