@@ -13,12 +13,28 @@ const formatTime = (dateString) => {
 
 export default function ProcessedHistory({ processedRequests }) {
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [dateSort, setDateSort] = useState('desc'); // Default to recent first
+
+  // Apply sorting
+  const sortedRequests = [...processedRequests].sort((a, b) => {
+    const dateA = new Date(a.created_at || a.start_date).getTime();
+    const dateB = new Date(b.created_at || b.start_date).getTime();
+    return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
+  });
 
   return (
     <div className="mt-8 relative">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Processed Leave History</CardTitle>
+          <select
+            value={dateSort}
+            onChange={(e) => setDateSort(e.target.value)}
+            className="border border-gray-200 rounded-lg text-sm px-3 py-1.5 text-gray-600 bg-white focus:ring-2 focus:ring-[#9b72e5] focus:border-transparent outline-none"
+          >
+            <option value="desc">Sort by Date: Newest</option>
+            <option value="asc">Sort by Date: Oldest</option>
+          </select>
         </CardHeader>
         <CardContent>
           {processedRequests.length === 0 ? (
@@ -39,7 +55,7 @@ export default function ProcessedHistory({ processedRequests }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {processedRequests.map(req => {
+                  {sortedRequests.map(req => {
                     const datesReq = formatActiveDateRanges(req.start_date, req.end_date, req.withdrawn_dates);
                     
                     const submitDate = formatTime(req.created_at);

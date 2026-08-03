@@ -15,6 +15,7 @@ export const useEmployeeLeaves = () => {
   
   const [statusFilter, setStatusFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
+  const [dateSort, setDateSort] = useState('desc');
   const [withdrawTarget, setWithdrawTarget] = useState(null);
 
   const handleWithdraw = (datesToWithdraw = []) => {
@@ -41,12 +42,20 @@ export const useEmployeeLeaves = () => {
   };
 
   const filteredLeaves = useMemo(() => {
-    return myLeaves.filter(req => {
+    let result = myLeaves.filter(req => {
       const matchStatus = statusFilter === 'All' || req.status === statusFilter.toLowerCase();
       const matchType = typeFilter === 'All' || req.leave_types?.name === typeFilter;
       return matchStatus && matchType;
     });
-  }, [myLeaves, statusFilter, typeFilter]);
+
+    result.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.start_date).getTime();
+      const dateB = new Date(b.created_at || b.start_date).getTime();
+      return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [myLeaves, statusFilter, typeFilter, dateSort]);
 
   return {
     loadingLeaves,
@@ -58,6 +67,8 @@ export const useEmployeeLeaves = () => {
     setStatusFilter,
     typeFilter,
     setTypeFilter,
+    dateSort,
+    setDateSort,
     withdrawTarget,
     setWithdrawTarget,
     handleWithdraw,

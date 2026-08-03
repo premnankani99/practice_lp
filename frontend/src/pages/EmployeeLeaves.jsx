@@ -15,6 +15,8 @@ export default function EmployeeLeaves() {
     setStatusFilter,
     typeFilter,
     setTypeFilter,
+    dateSort,
+    setDateSort,
     withdrawTarget,
     setWithdrawTarget,
     handleWithdraw,
@@ -48,6 +50,8 @@ export default function EmployeeLeaves() {
         setStatusFilter={setStatusFilter}
         typeFilter={typeFilter}
         setTypeFilter={setTypeFilter}
+        dateSort={dateSort}
+        setDateSort={setDateSort}
         leaveTypes={leaveTypes}
       />
 

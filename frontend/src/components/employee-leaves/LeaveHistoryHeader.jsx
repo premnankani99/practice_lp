@@ -1,6 +1,6 @@
 import { Filter } from 'lucide-react';
 
-export default function LeaveHistoryHeader({ statusFilter, setStatusFilter, typeFilter, setTypeFilter, leaveTypes }) {
+export default function LeaveHistoryHeader({ statusFilter, setStatusFilter, typeFilter, setTypeFilter, dateSort, setDateSort, leaveTypes }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <h2 className="text-lg font-bold text-gray-900">Request History</h2>
@@ -24,6 +24,14 @@ export default function LeaveHistoryHeader({ statusFilter, setStatusFilter, type
         >
           <option value="All">All Types</option>
           {leaveTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+        </select>
+        <select
+          value={dateSort}
+          onChange={(e) => setDateSort(e.target.value)}
+          className="border border-gray-200 rounded-lg text-sm px-3 py-1.5 text-gray-600 bg-white focus:ring-2 focus:ring-[#9b72e5] focus:border-transparent outline-none"
+        >
+          <option value="desc">Sort by Date: Newest</option>
+          <option value="asc">Sort by Date: Oldest</option>
         </select>
       </div>
     </div>
