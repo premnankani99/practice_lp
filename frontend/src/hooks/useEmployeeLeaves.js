@@ -49,8 +49,8 @@ export const useEmployeeLeaves = () => {
     });
 
     result.sort((a, b) => {
-      const dateA = new Date(a.created_at || a.start_date).getTime();
-      const dateB = new Date(b.created_at || b.start_date).getTime();
+      const dateA = new Date(a.start_date).getTime();
+      const dateB = new Date(b.start_date).getTime();
       return dateSort === 'desc' ? dateB - dateA : dateA - dateB;
     });
 
