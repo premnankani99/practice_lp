@@ -143,7 +143,9 @@ export const useAllRequests = () => {
         leave_types: { name: req.leave_type }
       }));
     },
-    enabled: role === 'admin' || role?.toLowerCase() === 'hr'
+    enabled: role === 'admin' || role?.toLowerCase() === 'hr',
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true
   });
 };
 
