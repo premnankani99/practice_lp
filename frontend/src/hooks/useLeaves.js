@@ -171,6 +171,8 @@ export const useUpdateRequestStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin_all_requests'] });
       queryClient.invalidateQueries({ queryKey: ['leave_balances'] });
+      queryClient.invalidateQueries({ queryKey: ['my_leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['leave_requests'] });
     }
   });
 };
