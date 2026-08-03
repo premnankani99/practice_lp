@@ -35,7 +35,9 @@ export const useMyBalances = () => {
         comp_off_leaves: data.user?.comp_off_leaves || 0
       };
     },
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true
   });
 };
 
@@ -59,7 +61,9 @@ export const useMyRequests = () => {
         leave_types: { name: req.leave_type }
       }));
     },
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true
   });
 };
 
