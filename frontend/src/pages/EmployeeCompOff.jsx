@@ -89,12 +89,8 @@ export default function EmployeeCompOff() {
           
           {/* Card 1: Monthly Leaves */}
           <div 
-            onClick={() => setIsMonthlyModalOpen(true)}
-            className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex flex-col items-center text-center transform scale-[0.99] hover:scale-100 transition-all cursor-pointer hover:border-blue-300 hover:shadow-md relative group"
+            className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex flex-col items-center text-center relative"
           >
-            <div className="absolute top-3 right-3 text-blue-300 group-hover:text-blue-500 transition-colors">
-              <Info className="w-4 h-4" />
-            </div>
             <CalendarPlus className="w-5 h-5 text-blue-500 mb-1.5" />
             <h3 className="text-sm font-bold text-gray-700">Monthly Leaves ({new Date().toLocaleString('en-US', { month: 'long' })})</h3>
             <p className="text-[11px] text-gray-500 mb-2 leading-tight h-6">Active leaves for this month</p>
@@ -103,13 +99,9 @@ export default function EmployeeCompOff() {
 
           {/* Card 2: Comp-Offs */}
           <div 
-            onClick={() => setIsSummaryModalOpen(true)}
-            className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex flex-col items-center text-center relative transform scale-[0.99] hover:scale-100 transition-all cursor-pointer hover:border-emerald-300 hover:shadow-md group"
+            className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex flex-col items-center text-center relative"
           >
-            <div className="absolute top-3 right-3 text-emerald-300 group-hover:text-emerald-500 transition-colors">
-              <Info className="w-4 h-4" />
-            </div>
-            <div className="hidden md:flex absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full border border-gray-100 items-center justify-center text-gray-400 font-bold z-20 shadow-sm text-sm">+</div>
+            <div className="hidden md:flex absolute -left-2 md:-left-[22px] top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-100 items-center justify-center text-gray-400 font-bold z-20 shadow-sm text-sm">+</div>
             <Gift className="w-5 h-5 text-emerald-500 mb-1.5" />
             <h3 className="text-sm font-bold text-gray-700">Extra Comp-Offs</h3>
             <p className="text-[11px] text-gray-500 mb-2 leading-tight h-6">Available days from extra work</p>
@@ -118,7 +110,7 @@ export default function EmployeeCompOff() {
 
           {/* Card 3: Final Balance */}
           <div className="bg-gradient-to-br from-[#7e57c2] to-[#6b48a8] shadow-lg rounded-xl p-4 flex flex-col items-center text-center relative transform md:scale-[1.02] transition-transform">
-            <div className="hidden md:flex absolute -left-3 md:-left-5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-100 items-center justify-center text-[#7e57c2] font-black z-20 shadow-sm text-sm">=</div>
+            <div className="hidden md:flex absolute -left-2 md:-left-[22px] top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-100 items-center justify-center text-[#7e57c2] font-black z-20 shadow-sm text-sm">=</div>
             <CheckCircle2 className="w-5 h-5 text-white mb-1.5" />
             <h3 className="text-sm font-bold text-white">Current Balance</h3>
             <p className="text-[11px] text-purple-200 mb-2 leading-tight h-6">Total days you can take off right now</p>

@@ -7,12 +7,11 @@ export default function AdvancedAnalytics({ allRequests = [] }) {
   const [timeFilter, setTimeFilter] = useState('This Year');
   const [deptFilter, setDeptFilter] = useState('All Departments');
 
-  // Extract unique departments for the dropdown
   const uniqueDepartments = useMemo(() => {
     const depts = new Set();
     allRequests.forEach(req => {
-      if (req.employee?.department?.name) {
-        depts.add(req.employee.department.name);
+      if (req.employee?.designation) {
+        depts.add(req.employee.designation);
       }
     });
     return Array.from(depts);
@@ -49,7 +48,7 @@ export default function AdvancedAnalytics({ allRequests = [] }) {
       // 2. Department Check
       let deptMatch = true;
       if (deptFilter !== 'All Departments') {
-        const empDept = req.employee?.department?.name;
+        const empDept = req.employee?.designation;
         deptMatch = empDept === deptFilter;
       }
 
