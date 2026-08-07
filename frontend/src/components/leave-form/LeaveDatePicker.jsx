@@ -50,7 +50,7 @@ export default function LeaveDatePicker({ control, isHalfDay, errors, myLeaves =
               field.onChange(dates);
             }}
             format="YYYY-MM-DD"
-            minDate={allowPastDates ? prevMonthDate : new Date()}
+            minDate={allowPastDates ? undefined : new Date()}
             maxDate={maxDate}
             inputClass={inputClass}
             containerClassName="w-full sm:w-1/2"

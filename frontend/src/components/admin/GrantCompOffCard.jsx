@@ -25,7 +25,7 @@ export default function GrantCompOffCard() {
   const grantMutation = useGrantCompOff();
   const toast = useToast();
 
-  const { register, control, handleSubmit, formState: { errors }, reset, setValue, getValues } = useForm({
+  const { register, control, handleSubmit, formState: { errors }, reset, setValue, getValues, watch } = useForm({
     resolver: zodResolver(compOffSchema),
     defaultValues: {
       employeeId: '',
@@ -34,6 +34,15 @@ export default function GrantCompOffCard() {
       reason: ''
     }
   });
+
+  const selectedEmployeeId = watch('employeeId');
+  const selectedEmployee = filteredEmployees?.find(e => e.id.toString() === selectedEmployeeId?.toString());
+  const getMinDateStr = (dateStr) => {
+    if (!dateStr) return undefined;
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const minDate = getMinDateStr(selectedEmployee?.date_of_joining || selectedEmployee?.created_at);
 
   const onSubmit = (data) => {
     console.log("[Frontend Component] Rendering onSubmit in GrantCompOffCard.jsx");
@@ -122,6 +131,7 @@ export default function GrantCompOffCard() {
                         field.onChange(newDates);
                       }}
                       max={new Date().toISOString().split('T')[0]}
+                      min={minDate}
                       className={`w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:ring-purple-500 focus:border-purple-500 ${errors.workedDates ? 'border-red-500' : 'border-gray-300'}`}
                     />
                   ))}

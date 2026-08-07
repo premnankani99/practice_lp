@@ -80,7 +80,7 @@ function App() {
 
                 {/* Protected Routes wrapped in Layout */}
                 <Route path="/" element={
-                  <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                  <ProtectedRoute allowedRoles={['employee']}>
                     <Layout><EmployeeDashboard /></Layout>
                   </ProtectedRoute>
                 } />

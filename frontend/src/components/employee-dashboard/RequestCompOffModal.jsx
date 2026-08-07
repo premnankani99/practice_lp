@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Loader2, Calendar } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useRequestCompOff } from '../../hooks/useCompOff';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/button';
@@ -14,6 +15,7 @@ const schema = z.object({
 });
 
 export default function RequestCompOffModal({ isOpen, onClose }) {
+  const { profile } = useAuth();
   const { mutate: requestCompOff, isPending } = useRequestCompOff();
   const toast = useToast();
 
@@ -26,10 +28,28 @@ export default function RequestCompOffModal({ isOpen, onClose }) {
     }
   });
 
+  const getMinDateStr = (dateStr) => {
+    if (!dateStr) return undefined;
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const minDate = getMinDateStr(profile?.date_of_joining || profile?.created_at);
+
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
     console.log("[Frontend Component] Rendering onSubmit in RequestCompOffModal.jsx");
+    const joinDate = new Date(profile?.date_of_joining || profile?.created_at);
+    joinDate.setHours(0, 0, 0, 0);
+
+    for (const dateStr of data.workedDates) {
+      const selectedDate = new Date(dateStr);
+      selectedDate.setHours(0, 0, 0, 0);
+      if (selectedDate < joinDate) {
+        toast.error("You cannot request comp-off for a date before your joining date.");
+        return;
+      }
+    }
     const payload = {
       daysRequested: data.daysRequested,
       reason: data.reason,
@@ -111,6 +131,7 @@ export default function RequestCompOffModal({ isOpen, onClose }) {
                         field.onChange(newDates);
                       }}
                       max={new Date().toISOString().split('T')[0]} // Cannot be in future
+                      min={minDate}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7e57c2] focus:border-transparent outline-none transition-all"
                     />
                   ))}

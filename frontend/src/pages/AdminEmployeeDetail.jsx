@@ -116,8 +116,12 @@ export default function AdminEmployeeDetail() {
         const workedDates = typeof compOff.workedDates === 'string' ? JSON.parse(compOff.workedDates) : compOff.workedDates;
         for (let workedDateStr of workedDates) {
           const wd = new Date(workedDateStr);
-          wd.setHours(0, 0, 0, 0);
-          if (wd.getTime() === dateToCheck.getTime() && compOff.status === 'approved') {
+          if (
+            wd.getFullYear() === dateToCheck.getFullYear() &&
+            wd.getMonth() === dateToCheck.getMonth() &&
+            wd.getDate() === dateToCheck.getDate() &&
+            compOff.status === 'approved'
+          ) {
             return true;
           }
         }
@@ -294,7 +298,7 @@ export default function AdminEmployeeDetail() {
             </div>
           </div>
           <div className="h-[400px]">
-            <LeaveHistoryTimeline leaves={leaves || []} />
+            <LeaveHistoryTimeline leaves={(leaves || []).filter(l => ['approved', 'rejected', 'pending'].includes(l.status.toLowerCase()))} />
           </div>
         </div>
         <div className="flex flex-col gap-4">
@@ -324,6 +328,10 @@ export default function AdminEmployeeDetail() {
               <div className="flex justify-between items-center p-2 rounded-xl bg-purple-50 border border-purple-100">
                 <span className="text-purple-800 font-medium">Half Days Used</span>
                 <span className="font-bold text-purple-900 text-base">{summary.halfDaysUsed}</span>
+              </div>
+              <div className="flex justify-between items-center p-2 rounded-xl bg-blue-50 border border-blue-100">
+                <span className="text-blue-800 font-medium">Comp Off Earned</span>
+                <span className="font-bold text-blue-900 text-base">{summary.compOffsEarned}</span>
               </div>
             </div>
           </div>

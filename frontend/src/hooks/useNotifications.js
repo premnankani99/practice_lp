@@ -125,10 +125,14 @@ export const useNotifications = () => {
 
         if (leave.approved_at) {
           const tDate = new Date(leave.approved_at);
+          const isAppliedByAdmin = leave.admin_note === 'Applied by Admin on behalf of employee' && new Date(leave.approved_at).getTime() - new Date(leave.created_at).getTime() < 5000;
+          
           notifs.push({
             id: `app_${leave.id}`,
-            title: 'Leave Approved',
-            message: `Your request for ${type} starting ${range} was approved.`,
+            title: isAppliedByAdmin ? 'Leave Applied By Admin' : 'Leave Approved',
+            message: isAppliedByAdmin 
+              ? `Admin applied for ${type} starting ${range} on your behalf.`
+              : `Your request for ${type} starting ${range} was approved.`,
             timeDate: tDate,
             time: timeAgo(leave.approved_at),
             icon: CheckCircle2,
@@ -185,18 +189,35 @@ export const useNotifications = () => {
       });
 
       myCompOffs.forEach(comp => {
-        const tDate = new Date(comp.grantedAt);
-        notifs.push({
-          id: `compoff_${comp.id}`,
-          title: 'Comp-Off Granted! 🎉',
-          message: `Admin granted you ${comp.daysGranted} day(s) of comp-off. Reason: ${comp.reason}`,
-          timeDate: tDate,
-          time: timeAgo(comp.grantedAt),
-          icon: CheckCircle2,
-          iconBg: 'bg-blue-100 text-blue-600',
-          isUnread: tDate.getTime() > lastReadTime,
-          link: '/my-comp-offs'
-        });
+        if (comp.status === 'approved') {
+          const tDate = new Date(comp.grantedAt || comp.createdAt);
+          notifs.push({
+            id: `compoff_${comp.id}`,
+            title: 'Comp-Off Granted! 🎉',
+            message: `Admin granted you ${comp.daysGranted} day(s) of comp-off. Reason: ${comp.reason}`,
+            timeDate: tDate,
+            time: timeAgo(comp.grantedAt || comp.createdAt),
+            icon: CheckCircle2,
+            iconBg: 'bg-blue-100 text-blue-600',
+            isUnread: tDate.getTime() > lastReadTime,
+            link: '/comp-off'
+          });
+        }
+        
+        if (comp.status === 'rejected') {
+          const tDate = new Date(comp.grantedAt || comp.createdAt);
+          notifs.push({
+            id: `compoff_rej_${comp.id}`,
+            title: 'Comp-Off Rejected',
+            message: `Your request for ${comp.daysGranted} day(s) of comp-off was rejected.`,
+            timeDate: tDate,
+            time: timeAgo(comp.grantedAt || comp.createdAt),
+            icon: XCircle,
+            iconBg: 'bg-red-100 text-red-600',
+            isUnread: tDate.getTime() > lastReadTime,
+            link: '/comp-off'
+          });
+        }
       });
     }
 
