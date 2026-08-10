@@ -20,6 +20,7 @@ export default function LeaveForm({ onSuccess }) {
     isHalfDay,
     selectedSession,
     myLeaves,
+    myCompOffs,
     available_leaves,
     comp_off_leaves
   } = useLeaveForm(onSuccess);
@@ -63,6 +64,7 @@ export default function LeaveForm({ onSuccess }) {
             isHalfDay={isHalfDay} 
             errors={errors} 
             myLeaves={myLeaves}
+            myCompOffs={myCompOffs}
           />
 
           {isHalfDay && (

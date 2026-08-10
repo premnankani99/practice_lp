@@ -113,8 +113,11 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
             </p>
           </div>
         ) : (
-          <table className="w-full text-base text-left">
-          <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+          <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <table className="w-full text-base text-left">
+              <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
             <tr>
               <th className="px-4 py-4 font-semibold text-gray-600 uppercase tracking-wide text-sm">Employee</th>
               <th className="px-4 py-4 font-semibold text-gray-600 uppercase tracking-wide text-sm">Contact</th>
@@ -164,7 +167,7 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
                 </td>
                 <td className="px-4 py-4 text-center whitespace-nowrap">
                   <div className="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-[#7e57c2] border border-purple-200 shadow-sm">
-                    {emp.available_leaves ?? 0} Days
+                    {(emp.available_leaves || 0) + (emp.comp_off_leaves || 0)} Days
                   </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
@@ -195,7 +198,59 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {filteredEmployees.map((emp, i) => (
+              <div key={emp.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                <div className="flex justify-between items-start mb-3">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => onRowClick ? onRowClick(emp) : setSelectedEmployee(emp)}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+                      {(emp.full_name || emp.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{emp.full_name || 'No Name'}</h4>
+                      <p className="text-xs text-gray-500">{emp.designation || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-[#7e57c2] border border-purple-200">
+                    {(emp.available_leaves || 0) + (emp.comp_off_leaves || 0)} Days
+                  </div>
+                </div>
+                <div className="space-y-2 mt-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Mail className="w-4 h-4 shrink-0 text-gray-400" />
+                    <span className="truncate">{emp.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
+                      {new Date(emp.date_of_joining || emp.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <ShieldCheck className="w-3 h-3" /> Verified
+                    </span>
+                  </div>
+                </div>
+                {!readOnly && (
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end gap-2">
+                    <button onClick={() => handleEditClick(emp)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                      <Edit className="w-4 h-4" /> Edit
+                    </button>
+                    <button onClick={() => handleDeleteClick(emp)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-100 transition-colors">
+                      <Trash2 className="w-4 h-4" /> Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 

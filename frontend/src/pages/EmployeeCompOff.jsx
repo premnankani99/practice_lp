@@ -153,7 +153,9 @@ export default function EmployeeCompOff() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       {getStatusIcon(req.status)}
-                      <h4 className="font-bold text-gray-900 text-lg group-hover:text-[#7e57c2] transition-colors">{req.daysGranted} Days Requested</h4>
+                      <h4 className="font-bold text-gray-900 text-lg group-hover:text-[#7e57c2] transition-colors">
+                        {req.grantedBy ? `${req.daysGranted} Days Granted` : `${req.daysGranted} Days Requested`}
+                      </h4>
                     </div>
                     <p className="text-sm text-gray-600 ml-8 truncate max-w-sm">
                       <span className="font-medium text-gray-700">Worked Dates:</span> {req.workedDates && Array.isArray(req.workedDates) ? req.workedDates.map(d => new Date(d).toLocaleDateString()).join(', ') : 'N/A'}
@@ -170,7 +172,7 @@ export default function EmployeeCompOff() {
                       </div>
                     </div>
                     <span className="text-xs text-gray-400 font-medium">
-                      Requested on {new Date(req.createdAt || req.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {req.grantedBy ? 'Granted on' : 'Requested on'} {new Date(req.createdAt || req.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <div className="sm:hidden flex items-center gap-1 text-xs font-bold text-[#7e57c2] mt-1 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100 w-max">
                         View Details &rarr;
@@ -211,13 +213,23 @@ export default function EmployeeCompOff() {
                 {/* Step 1: Requested */}
                 <div className="relative">
                   <div className="absolute w-3 h-3 bg-[#7e57c2] rounded-full -left-[29px] top-1.5 ring-4 ring-white"></div>
-                  <p className="text-xs text-gray-400 font-bold mb-1 uppercase">Step 1: Request Created</p>
-                  <p className="text-sm font-semibold text-gray-900">Requested {selectedCompOff.daysRequested} Days</p>
+                  <p className="text-xs text-gray-400 font-bold mb-1 uppercase">Step 1: {selectedCompOff.grantedBy ? 'Comp-Off Granted' : 'Request Created'}</p>
+                  <p className="text-sm font-semibold text-gray-900">{selectedCompOff.grantedBy ? 'Granted' : 'Requested'} {selectedCompOff.daysGranted || selectedCompOff.daysRequested} Days</p>
                   <p className="text-sm text-gray-500 mt-1">On {new Date(selectedCompOff.createdAt || selectedCompOff.grantedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</p>
                   <div className="bg-gray-50 p-3 rounded-lg mt-2 text-sm text-gray-700 border border-gray-100">
                     <span className="font-semibold block text-xs text-gray-400 mb-1">REASON GIVEN</span>
                     {selectedCompOff.reason}
                   </div>
+                  {selectedCompOff.workedDates && Array.isArray(selectedCompOff.workedDates) && selectedCompOff.workedDates.length > 0 && (
+                    <div className="bg-purple-50/50 p-3 rounded-lg mt-2 text-sm text-gray-700 border border-purple-100">
+                      <span className="font-semibold block text-xs text-purple-400 mb-1">WORKED DATES</span>
+                      <ul className="list-disc pl-4 mt-1 text-xs space-y-1 text-purple-900">
+                        {selectedCompOff.workedDates.map((date, idx) => (
+                          <li key={idx}>{new Date(date).toDateString()}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {/* Step 2: Action Taken */}

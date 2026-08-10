@@ -6,7 +6,7 @@ import { useHolidays } from '../../hooks/useHolidays';
 // A custom class for styling the Multi-Date Picker input via Tailwind instead of inline styles
 const inputClass = "w-full py-2.5 px-3.5 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-[#7e57c2] focus:border-[#7e57c2]";
 
-export default function LeaveDatePicker({ control, isHalfDay, errors, myLeaves = [], allowPastDates = false }) {
+export default function LeaveDatePicker({ control, isHalfDay, errors, myLeaves = [], myCompOffs = [], allowPastDates = false }) {
   const now = new Date();
   const maxDate = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -21,6 +21,14 @@ export default function LeaveDatePicker({ control, isHalfDay, errors, myLeaves =
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
       appliedDates.add(dateStr);
       currentDate.setDate(currentDate.getDate() + 1);
+    }
+  });
+
+  const compOffDates = new Set();
+  myCompOffs.forEach(co => {
+    if (co.status === 'rejected' || co.status === 'cancelled' || co.status === 'withdrawn') return;
+    if (co.workedDates && Array.isArray(co.workedDates)) {
+      co.workedDates.forEach(dateStr => compOffDates.add(dateStr));
     }
   });
 
@@ -69,6 +77,15 @@ export default function LeaveDatePicker({ control, isHalfDay, errors, myLeaves =
                   disabled: true,
                   style: { color: "#ef4444", textDecoration: "line-through", backgroundColor: "#fef2f2", fontWeight: "bold" },
                   title: 'Already applied for leave on this date'
+                };
+              }
+
+              const isCompOff = compOffDates.has(dateStr);
+              if (isCompOff) {
+                return {
+                  disabled: true,
+                  style: { color: "#8b5cf6", textDecoration: "line-through", backgroundColor: "#f5f3ff", fontWeight: "bold" },
+                  title: 'Already claimed as Comp-Off'
                 };
               }
               if (isWeekend) {

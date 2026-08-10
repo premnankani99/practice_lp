@@ -93,6 +93,7 @@ export default function AdminApplyLeaveForm({ onSuccess }) {
               isHalfDay={isHalfDay} 
               errors={errors} 
               myLeaves={myLeaves}
+              myCompOffs={employeeData?.compOffs || []}
               allowPastDates={true}
             />
 

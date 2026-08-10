@@ -5,6 +5,7 @@ import { leaveSchema } from '../utils/leaveValidation';
 import { calculateMultiDateBreakdown } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useLeaveTypes, useCreateRequest, useMyRequests, useMyBalances } from './useLeaves';
+import { useMyCompOffs } from './useCompOff';
 import { useHolidays } from './useHolidays';
 import { useToast } from '../context/ToastContext';
 
@@ -13,6 +14,7 @@ export const useLeaveForm = (onSuccess) => {
   const { user } = useAuth();
   const { data: leaveTypes = [], isLoading: loadingTypes } = useLeaveTypes();
   const { data: myLeaves = [] } = useMyRequests();
+  const { data: myCompOffs = [] } = useMyCompOffs();
   const { data: { available_leaves = 0, comp_off_leaves = 0 } = {} } = useMyBalances();
   const { holidaysList } = useHolidays();
   const createRequest = useCreateRequest();
@@ -158,6 +160,7 @@ export const useLeaveForm = (onSuccess) => {
     isHalfDay,
     selectedSession,
     myLeaves,
+    myCompOffs,
     available_leaves,
     comp_off_leaves
   };

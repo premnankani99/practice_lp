@@ -42,7 +42,9 @@ export default function ProcessedHistory({ processedRequests }) {
               <p className="text-gray-500">No processed requests found.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-base text-left">
                 <thead className="bg-gray-50 text-gray-500 border-b border-gray-100">
                   <tr>
@@ -99,9 +101,66 @@ export default function ProcessedHistory({ processedRequests }) {
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {sortedRequests.map(req => {
+                  const datesReq = formatActiveDateRanges(req.start_date, req.end_date, req.withdrawn_dates);
+                  
+                  const submitDate = formatTime(req.created_at);
+                  const approvedDate = formatTime(req.approved_at);
+                  const rejectedDate = formatTime(req.rejected_at);
+                  const withdrawnDate = formatTime(req.withdrawn_at);
+                  
+                  return (
+                    <div key={req.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-bold text-gray-900">{req.profiles?.full_name}</h4>
+                          <span className="text-sm text-gray-500">{req.profiles?.email}</span>
+                        </div>
+                        <Badge className="capitalize" variant={req.status === 'approved' ? 'success' : req.status === 'rejected' ? 'danger' : req.status === 'cancelled' ? 'black' : 'secondary'}>
+                          {req.status === 'cancelled' ? 'withdrawn' : req.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <span className="text-xs font-semibold text-gray-500 block mb-0.5">Leave Type</span>
+                          <span className="text-sm text-gray-900 font-medium">{req.leave_types?.name}</span>
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-gray-500 block mb-0.5">Days</span>
+                          <span className="text-sm text-gray-900 font-medium">{req.total_days} days</span>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <span className="text-xs font-semibold text-gray-500 block mb-0.5">Dates</span>
+                        <span className="text-sm text-gray-700">{datesReq}</span>
+                      </div>
+                      
+                      <div className="space-y-1.5 bg-gray-50/50 p-3 rounded-lg border border-gray-100 text-xs text-gray-600 mb-4">
+                        <div><span className="font-semibold text-gray-700">Applied:</span> {submitDate}</div>
+                        {approvedDate && <div><span className="font-semibold text-emerald-600">Approved:</span> {approvedDate}</div>}
+                        {rejectedDate && <div><span className="font-semibold text-red-600">Rejected:</span> {rejectedDate}</div>}
+                        {withdrawnDate && <div><span className="font-semibold text-gray-600">Withdrawn:</span> {withdrawnDate}</div>}
+                      </div>
+
+                      <button 
+                        onClick={() => setSelectedRequest(req)}
+                        className="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#7e57c2] bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors border border-purple-100"
+                      >
+                        <Eye className="w-4 h-4" /> View Details
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

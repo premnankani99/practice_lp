@@ -22,17 +22,21 @@ export const useAdminApplyLeave = (onSuccess, employees = []) => {
   const { data: employeeData, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employeeDetails', selectedEmployeeId],
     queryFn: async () => {
-      if (!selectedEmployeeId) return { leaves: [], available_leaves: 0, profile: null };
+      if (!selectedEmployeeId) return { leaves: [], compOffs: [], available_leaves: 0, comp_off_leaves: 0, profile: null };
       
       const token = localStorage.getItem('token');
       const leavesRes = await fetch(`${API_BASE_URL}/api/leaves/employee/${selectedEmployeeId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const compOffsRes = await fetch(`${API_BASE_URL}/api/leaves/employee/${selectedEmployeeId}/comp-offs`, { headers: { Authorization: `Bearer ${token}` } });
       
       const leaves = leavesRes.ok ? await leavesRes.json() : [];
-      const profile = employees.find(emp => emp.id === selectedEmployeeId) || null;
+      const compOffs = compOffsRes.ok ? await compOffsRes.json() : [];
+      const profile = employees.find(emp => String(emp.id) === String(selectedEmployeeId)) || null;
       
       return { 
         leaves, 
+        compOffs,
         available_leaves: profile?.available_leaves || 0,
+        comp_off_leaves: profile?.comp_off_leaves || 0,
         profile 
       };
     },

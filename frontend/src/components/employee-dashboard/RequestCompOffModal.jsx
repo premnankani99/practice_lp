@@ -4,9 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Loader2, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useRequestCompOff } from '../../hooks/useCompOff';
+import { useRequestCompOff, useMyCompOffs } from '../../hooks/useCompOff';
 import { useToast } from '../../context/ToastContext';
+import { useMemo } from 'react';
 import { Button } from '../ui/button';
+import DatePickerDefault from "react-multi-date-picker";
+const DatePicker = DatePickerDefault.default || DatePickerDefault;
 
 const schema = z.object({
   daysRequested: z.coerce.number().min(0.5, "Minimum 0.5 days").max(10, "Maximum 10 days"),
@@ -17,6 +20,7 @@ const schema = z.object({
 export default function RequestCompOffModal({ isOpen, onClose }) {
   const { profile } = useAuth();
   const { mutate: requestCompOff, isPending } = useRequestCompOff();
+  const { data: myCompOffs } = useMyCompOffs();
   const toast = useToast();
 
   const { control, handleSubmit, formState: { errors }, reset, setValue, getValues } = useForm({
@@ -35,6 +39,17 @@ export default function RequestCompOffModal({ isOpen, onClose }) {
   };
   const minDate = getMinDateStr(profile?.date_of_joining || profile?.created_at);
 
+  const alreadyRequestedDates = useMemo(() => {
+    if (!myCompOffs) return [];
+    const dates = new Set();
+    myCompOffs.forEach(req => {
+      if (req.status !== 'rejected' && Array.isArray(req.workedDates)) {
+        req.workedDates.forEach(d => dates.add(d));
+      }
+    });
+    return Array.from(dates);
+  }, [myCompOffs]);
+
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
@@ -49,6 +64,11 @@ export default function RequestCompOffModal({ isOpen, onClose }) {
         toast.error("You cannot request comp-off for a date before your joining date.");
         return;
       }
+    }
+    const duplicateDates = data.workedDates.filter(d => alreadyRequestedDates.includes(d));
+    if (duplicateDates.length > 0) {
+      toast.error(`You have already requested or received a Comp-Off for ${duplicateDates.join(', ')}.`);
+      return;
     }
     const payload = {
       daysRequested: data.daysRequested,
@@ -121,18 +141,30 @@ export default function RequestCompOffModal({ isOpen, onClose }) {
               render={({ field }) => (
                 <div className="space-y-2">
                   {field.value.map((_, index) => (
-                    <input 
+                    <DatePicker 
                       key={index}
-                      type="date" 
-                      value={field.value[index] || ''}
-                      onChange={(e) => {
+                      value={field.value[index] ? new Date(field.value[index]) : null}
+                      onChange={(date) => {
                         const newDates = [...field.value];
-                        newDates[index] = e.target.value;
+                        const selectedDate = date ? date.format("YYYY-MM-DD") : '';
+                        newDates[index] = selectedDate;
                         field.onChange(newDates);
                       }}
-                      max={new Date().toISOString().split('T')[0]} // Cannot be in future
-                      min={minDate}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7e57c2] focus:border-transparent outline-none transition-all"
+                      format="YYYY-MM-DD"
+                      maxDate={new Date()} // Cannot be in future
+                      minDate={minDate}
+                      inputClass={`w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:ring-purple-500 focus:border-purple-500 ${errors.workedDates ? 'border-red-500' : 'border-gray-300'}`}
+                      containerClassName="w-full"
+                      mapDays={({ date }) => {
+                        const dateStr = `${date.year}-${String(date.month.number).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+                        if (alreadyRequestedDates.includes(dateStr)) {
+                          return {
+                            disabled: true,
+                            style: { color: "#ef4444", textDecoration: "line-through", backgroundColor: "#fef2f2" },
+                            title: 'Already requested/granted'
+                          };
+                        }
+                      }}
                     />
                   ))}
                 </div>

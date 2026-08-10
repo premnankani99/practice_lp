@@ -2,13 +2,16 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useGrantCompOff } from '../../hooks/useCompOff';
+import { useGrantCompOff, useCompOffHistory } from '../../hooks/useCompOff';
 import { useAdminEmployees } from '../../hooks/useAdminEmployees';
 import { useToast } from '../../context/ToastContext';
+import { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Loader2, Gift } from 'lucide-react';
 import { Controller } from 'react-hook-form';
+import DatePickerDefault from "react-multi-date-picker";
+const DatePicker = DatePickerDefault.default || DatePickerDefault;
 
 const compOffSchema = z.object({
   employeeId: z.string().min(1, "Please select an employee"),
@@ -23,6 +26,7 @@ const compOffSchema = z.object({
 export default function GrantCompOffCard() {
   const { filteredEmployees, isLoading: loadingEmployees } = useAdminEmployees();
   const grantMutation = useGrantCompOff();
+  const { data: compOffHistory } = useCompOffHistory();
   const toast = useToast();
 
   const { register, control, handleSubmit, formState: { errors }, reset, setValue, getValues, watch } = useForm({
@@ -44,8 +48,27 @@ export default function GrantCompOffCard() {
   };
   const minDate = getMinDateStr(selectedEmployee?.date_of_joining || selectedEmployee?.created_at);
 
+  const alreadyGrantedDates = useMemo(() => {
+    if (!compOffHistory || !selectedEmployeeId) return [];
+    const dates = new Set();
+    compOffHistory.forEach(grant => {
+      if (grant.employeeId?.toString() === selectedEmployeeId?.toString() && grant.status !== 'rejected') {
+        if (Array.isArray(grant.workedDates)) {
+          grant.workedDates.forEach(d => dates.add(d));
+        }
+      }
+    });
+    return Array.from(dates);
+  }, [compOffHistory, selectedEmployeeId]);
+
   const onSubmit = (data) => {
     console.log("[Frontend Component] Rendering onSubmit in GrantCompOffCard.jsx");
+    const duplicateDates = data.workedDates.filter(d => alreadyGrantedDates.includes(d));
+    if (duplicateDates.length > 0) {
+      toast.error(`Comp-Off for ${duplicateDates.join(', ')} has already been processed or requested!`);
+      return;
+    }
+    
     grantMutation.mutate(data, {
       onSuccess: (res) => {
         toast.success(`Comp-off granted. New leave balance is ${res.newBalance} days.`);
@@ -77,7 +100,7 @@ export default function GrantCompOffCard() {
               <option value="">Select Employee</option>
               {filteredEmployees?.filter(e => e.role === 'employee').map(emp => (
                 <option key={emp.id} value={emp.id}>
-                  {emp.full_name} ({emp.email}) - Bal: {emp.available_leaves}
+                  {emp.full_name} ({emp.email}) - Bal: {(emp.available_leaves || 0) + (emp.comp_off_leaves || 0)}
                 </option>
               ))}
             </select>
@@ -121,18 +144,30 @@ export default function GrantCompOffCard() {
               render={({ field }) => (
                 <div className="space-y-2">
                   {field.value.map((_, index) => (
-                    <input 
+                    <DatePicker 
                       key={index}
-                      type="date"
-                      value={field.value[index] || ''}
-                      onChange={(e) => {
+                      value={field.value[index] ? new Date(field.value[index]) : null}
+                      onChange={(date) => {
                         const newDates = [...field.value];
-                        newDates[index] = e.target.value;
+                        const selectedDate = date ? date.format("YYYY-MM-DD") : '';
+                        newDates[index] = selectedDate;
                         field.onChange(newDates);
                       }}
-                      max={new Date().toISOString().split('T')[0]}
-                      min={minDate}
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:ring-purple-500 focus:border-purple-500 ${errors.workedDates ? 'border-red-500' : 'border-gray-300'}`}
+                      format="YYYY-MM-DD"
+                      maxDate={new Date()}
+                      minDate={minDate}
+                      inputClass={`w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:ring-purple-500 focus:border-purple-500 ${errors.workedDates ? 'border-red-500' : 'border-gray-300'}`}
+                      containerClassName="w-full"
+                      mapDays={({ date }) => {
+                        const dateStr = `${date.year}-${String(date.month.number).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+                        if (alreadyGrantedDates.includes(dateStr)) {
+                          return {
+                            disabled: true,
+                            style: { color: "#ef4444", textDecoration: "line-through", backgroundColor: "#fef2f2" },
+                            title: 'Already granted'
+                          };
+                        }
+                      }}
                     />
                   ))}
                 </div>

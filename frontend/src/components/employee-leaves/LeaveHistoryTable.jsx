@@ -53,8 +53,10 @@ export default function LeaveHistoryTable({ loadingLeaves, filteredLeaves, statu
 
   return (
     <div className="flex-1 overflow-auto">
-      <table className="w-full text-base text-left">
-        <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <table className="w-full text-base text-left">
+          <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
           <tr>
             {['Leave Type', 'Dates', 'Reason', 'Timings', 'Status', 'Actions'].map(h => (
               <th key={h} className="px-5 py-4 font-semibold text-sm text-gray-500 uppercase tracking-wide">{h}</th>
@@ -176,7 +178,117 @@ export default function LeaveHistoryTable({ loadingLeaves, filteredLeaves, statu
             );
           })}
         </tbody>
-      </table>
+        </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden divide-y divide-gray-100">
+        {filteredLeaves.map(req => {
+          const sc = getStatusConfig(req.status);
+          const StatusIcon = sc.icon;
+          
+          const submitDate = formatTime(req.created_at);
+          const approvedDate = formatTime(req.approved_at);
+          const rejectedDate = formatTime(req.rejected_at);
+          const withdrawnDate = formatTime(req.withdrawn_at);
+          const withdrawReqDate = formatTime(req.withdrawal_requested_at);
+
+          const dateRange = formatActiveDateRanges(req.start_date, req.end_date, req.withdrawn_dates);
+          const typeClass = getLeaveTypeBgClass(req.leave_types?.name);
+
+          const currentPaid = req.paid_days !== null ? req.paid_days : req.total_days;
+          const hasUnpaid = req.total_days > currentPaid;
+          const canAdjust = hasUnpaid && user?.available_leaves > 0 && (req.status === 'pending' || req.status === 'approved');
+          
+          let sessionDisplay = "Half Day";
+          let cleanReason = req.reason || '—';
+          if (req.is_half_day) {
+            const match = req.reason?.match(/\[Half-Day: (.*?)\]/);
+            if (match) {
+              sessionDisplay = `Half Day - ${match[1] === 'Morning' ? 'AM' : 'PM'}`;
+              cleanReason = req.reason.replace(/\[Half-Day: .*?\]\s*/, '');
+            }
+          }
+          
+          let showAdjust = false;
+          if (canAdjust) {
+              const now = new Date();
+              const leaveStart = new Date(req.start_date);
+              if (leaveStart.getMonth() === now.getMonth() && leaveStart.getFullYear() === now.getFullYear()) {
+                  const diffTime = now.getTime() - leaveStart.getTime();
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                  if (diffDays <= 8) showAdjust = true;
+              }
+          }
+
+          return (
+            <div key={req.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${typeClass}`} />
+                  <span className="font-bold text-gray-800">{req.leave_types?.name || 'Leave'}</span>
+                </div>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${sc.cls}`}>
+                  <StatusIcon className="w-3 h-3" />{sc.label}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-2 text-sm text-gray-700">
+                <span>{dateRange}</span>
+                {req.is_half_day ? (
+                  <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{sessionDisplay}</span>
+                ) : (
+                  <span className="text-[11px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-medium">{req.total_days}d</span>
+                )}
+              </div>
+              
+              <div className="text-sm text-gray-500 mb-3 line-clamp-2">
+                {cleanReason}
+              </div>
+              
+              <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100 text-xs text-gray-600 mb-3 space-y-1">
+                <div><span className="font-semibold text-gray-700">Applied:</span> {submitDate}</div>
+                {approvedDate && <div><span className="font-semibold text-emerald-600">Approved:</span> {approvedDate}</div>}
+                {rejectedDate && <div><span className="font-semibold text-red-600">Rejected:</span> {rejectedDate}</div>}
+                {withdrawReqDate && <div><span className="font-semibold text-orange-600">Withdraw Req:</span> {withdrawReqDate}</div>}
+                {withdrawnDate && <div><span className="font-semibold text-gray-600">Withdrawn:</span> {withdrawnDate}</div>}
+                {req.admin_note && (
+                  <div className="mt-1 pt-1 border-t border-gray-200">
+                    <span className="font-semibold text-gray-900">Admin Note:</span> {req.admin_note}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                <button
+                  onClick={() => onViewDetails(req)}
+                  className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg border border-purple-100"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Details
+                </button>
+                {(req.status === 'pending' || req.status === 'approved') && (
+                  <button
+                    onClick={() => setWithdrawTarget(req)}
+                    disabled={isWithdrawing}
+                    className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 rounded-lg border border-orange-100 disabled:opacity-50"
+                  >
+                    <Ban className="w-3.5 h-3.5" /> Withdraw
+                  </button>
+                )}
+                {showAdjust && (
+                  <button
+                    onClick={() => handleAdjust(req.id)}
+                    disabled={isAdjusting}
+                    className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg border border-blue-100 disabled:opacity-50"
+                  >
+                    {isAdjusting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCcw className="w-3.5 h-3.5" />} Adjust Balance
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

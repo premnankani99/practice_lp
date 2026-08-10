@@ -24,8 +24,11 @@ export default function CompOffHistoryTable() {
             <p>No comp-off grants history found.</p>
           </div>
         ) : (
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-50 text-gray-500 sticky top-0 border-b border-gray-200">
+          <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50 text-gray-500 sticky top-0 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 font-medium">Employee</th>
                 <th className="px-4 py-3 font-medium">Days</th>
@@ -45,7 +48,7 @@ export default function CompOffHistoryTable() {
                       +{grant.daysGranted}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 max-w-[150px] truncate">
+                  <td className="px-4 py-3 text-gray-500 text-xs">
                     {grant.workedDates && Array.isArray(grant.workedDates) ? grant.workedDates.map(d => new Date(d).toDateString()).join(', ') : 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500">
@@ -54,7 +57,37 @@ export default function CompOffHistoryTable() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {history?.map((grant) => (
+              <div key={grant.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{grant.employee.full_name}</h4>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 mt-1">
+                      +{grant.daysGranted} Days
+                    </span>
+                  </div>
+                  <div className="text-right text-[10px] text-gray-500">
+                    {new Date(grant.updatedAt || grant.grantedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <div className="text-xs text-gray-600 mb-2">
+                  <span className="font-semibold text-gray-700 block">Worked Dates:</span>
+                  <div className="mt-0.5">{grant.workedDates && Array.isArray(grant.workedDates) ? grant.workedDates.map(d => new Date(d).toDateString()).join(', ') : 'N/A'}</div>
+                </div>
+                {grant.reason && (
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-100 italic">
+                    "{grant.reason}"
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </CardContent>
     </Card>
