@@ -70,16 +70,27 @@ export default function LeaveApprovalQueue({
                         {req.profiles?.full_name?.charAt(0).toUpperCase() || 'U'}
                       </div>
                       <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <h4 className="font-bold text-gray-900 group-hover:text-[#7e57c2] transition-colors text-lg leading-tight">{req.profiles?.full_name}</h4>
-                          <span className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border ${badgeColor}`}>
-                            {statusLabel}
-                          </span>
-                          {isWithdrawal && (
-                            <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border bg-red-100 text-red-700 border-red-200 flex items-center gap-1 shadow-sm">
-                              <AlertCircle className="w-3 h-3" /> Withdrawal
+                        <div className="flex flex-col mb-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-gray-900 group-hover:text-[#7e57c2] transition-colors text-lg leading-tight">{req.profiles?.full_name}</h4>
+                            <span className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                              {statusLabel}
                             </span>
-                          )}
+                            {isWithdrawal && (
+                              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border bg-red-100 text-red-700 border-red-200 flex items-center gap-1 shadow-sm">
+                                <AlertCircle className="w-3 h-3" /> Withdrawal
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+                            <span>{req.profiles?.email}</span>
+                            {req.profiles?.department?.name && (
+                              <>
+                                <span>•</span>
+                                <span className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-sm">{req.profiles?.department?.name}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <div className="text-sm text-gray-500 flex flex-wrap items-center gap-1.5 font-medium">
                           <span className="text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md text-xs">{req.leave_types?.name || 'Leave'}</span>
