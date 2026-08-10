@@ -64,8 +64,9 @@ export default function CompOffBalanceOverview() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayed.map(emp => {
-                const percentage = Math.min((emp.available_leaves / (emp.total_leaves || 20)) * 100, 100);
-                const isHigh = emp.available_leaves > 15;
+                const totalBal = emp.available_leaves + (emp.comp_off_leaves || 0);
+                const percentage = Math.min((totalBal / (emp.total_leaves || 20)) * 100, 100);
+                const isHigh = totalBal > 15;
                 
                 return (
                   <div 
@@ -73,13 +74,14 @@ export default function CompOffBalanceOverview() {
                     onClick={() => setSelectedEmployee(emp)}
                     className="p-4 rounded-xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all group cursor-pointer"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold text-gray-900 group-hover:text-[#7e57c2] transition-colors">{emp.full_name}</p>
-                        <p className="text-xs text-gray-500">{emp.designation || 'Employee'}</p>
+                    <div className="flex justify-between items-start mb-3 gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 group-hover:text-[#7e57c2] transition-colors truncate" title={emp.full_name}>{emp.full_name}</p>
+                        <p className="text-[11px] text-gray-400 truncate" title={emp.email}>{emp.email}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{emp.designation || 'Employee'}</p>
                       </div>
                       <span className={`px-2 py-1 rounded-md text-xs font-bold ${isHigh ? 'bg-green-50 text-green-700' : 'bg-purple-50 text-[#7e57c2]'}`}>
-                        {emp.available_leaves} days
+                        {totalBal} days
                       </span>
                     </div>
                     
@@ -107,9 +109,10 @@ export default function CompOffBalanceOverview() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedEmployee.full_name}</h3>
-                <p className="text-sm text-gray-500">{selectedEmployee.designation || 'Employee'}</p>
+              <div className="min-w-0 pr-4">
+                <h3 className="text-xl font-bold text-gray-900 truncate" title={selectedEmployee.full_name}>{selectedEmployee.full_name}</h3>
+                <p className="text-sm text-gray-500 truncate">{selectedEmployee.email}</p>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{selectedEmployee.designation || 'Employee'}</p>
               </div>
               <button 
                 onClick={() => setSelectedEmployee(null)}
@@ -120,13 +123,28 @@ export default function CompOffBalanceOverview() {
             </div>
             
             <div className="p-6 overflow-auto custom-scrollbar flex-1">
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl mb-6">
-                <div>
-                  <p className="text-sm font-medium text-purple-900">Total Available Balance</p>
-                  <p className="text-xs text-purple-700/70 mt-1">Includes monthly quota and comp-offs</p>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-purple-50 rounded-xl flex flex-col justify-center">
+                  <p className="text-xs font-medium text-purple-900 mb-1">Standard Leaves</p>
+                  <div className="text-2xl font-black text-[#7e57c2]">
+                    {selectedEmployee.available_leaves} <span className="text-sm font-medium">days</span>
+                  </div>
                 </div>
-                <div className="text-2xl font-black text-[#7e57c2]">
-                  {selectedEmployee.available_leaves} <span className="text-base font-medium">days</span>
+                <div className="p-4 bg-green-50 rounded-xl flex flex-col justify-center">
+                  <p className="text-xs font-medium text-green-900 mb-1">Comp-Off Balance</p>
+                  <div className="text-2xl font-black text-green-700">
+                    {selectedEmployee.comp_off_leaves || 0} <span className="text-sm font-medium">days</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl mb-6">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Total Available Balance</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Standard + Comp-Offs</p>
+                </div>
+                <div className="text-xl font-black text-gray-900">
+                  {(selectedEmployee.available_leaves || 0) + (selectedEmployee.comp_off_leaves || 0)} <span className="text-sm font-medium">days</span>
                 </div>
               </div>
 
@@ -152,6 +170,11 @@ export default function CompOffBalanceOverview() {
                       <p className="text-xs text-gray-500">
                         Granted on: {new Date(grant.grantedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
+                      {grant.workedDates && grant.workedDates.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Worked on: {grant.workedDates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })).join(', ')}
+                        </p>
+                      )}
                     </div>
                   ))
                 )}
