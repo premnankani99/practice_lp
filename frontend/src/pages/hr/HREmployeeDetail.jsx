@@ -154,7 +154,12 @@ export default function HREmployeeDetail() {
       }
     }
     
-    const compOffsEarned = compOffs ? compOffs.filter(c => c.status === 'approved' && new Date(c.created_at).getMonth() === currentDate.getMonth()).length : 0;
+    let compOffsEarned = 0;
+    for (let i = 1; i <= daysInMonth; i++) {
+      if (isCompOffEarnedDay(i)) {
+        compOffsEarned++;
+      }
+    }
     const compOffBalance = employee?.comp_off_leaves || 0;
     const monthlyBalance = employee?.available_leaves || 0;
     const totalBalance = compOffBalance + monthlyBalance;
@@ -162,7 +167,85 @@ export default function HREmployeeDetail() {
     return { totalWorkingDays, daysPresent, paidLeaveUsed, unpaidLeaveUsed, halfDaysUsed, pendingLeaves, compOffsEarned, compOffBalance, monthlyBalance, totalBalance };
   };
 
+  const calculateLifetimeSummary = () => {
+    if (!leaves || !employee) return {
+      totalCompOffEarned: 0,
+      paidLeavesFromCompOff: 0,
+      paidLeavesFromMonthly: 0,
+      unpaidLeavesLifetime: 0,
+      pendingLeavesLifetime: 0,
+      halfDaysLifetime: 0,
+      lifetimeBalance: 0
+    };
+
+    // 1. Total Comp Off Earned (from joining date to current date)
+    const totalCompOffEarned = compOffs 
+      ? compOffs
+          .filter(c => c.status === 'approved')
+          .reduce((sum, c) => sum + (c.daysGranted || 0), 0)
+      : 0;
+
+    // 2. Paid Leaves Used (approved or pending/withdrawal_requested) from joining to current
+    const totalPaidLeavesTaken = leaves
+      .filter(l => 
+        ['approved', 'pending', 'withdrawal_requested'].includes(l.status) &&
+        !l.leave_type.toLowerCase().includes('unpaid')
+      )
+      .reduce((sum, l) => sum + (l.total_days || 0), 0);
+
+    // 3. Paid Leaves covered from previous compoff work (assume compoffs used first)
+    const paidLeavesFromCompOff = Math.min(totalCompOffEarned, totalPaidLeavesTaken);
+
+    // 4. Paid Leaves covered from monthly leave
+    const paidLeavesFromMonthly = totalPaidLeavesTaken - paidLeavesFromCompOff;
+
+    // 5. Unpaid Leaves (LOP) if any from joining date to current date
+    const unpaidLeavesLifetime = leaves
+      .filter(l => 
+        ['approved', 'pending', 'withdrawal_requested'].includes(l.status) &&
+        l.leave_type.toLowerCase().includes('unpaid')
+      )
+      .reduce((sum, l) => sum + (l.total_days || 0), 0);
+
+    // 6. Pending Leaves (if employee not use monthly leave)
+    let dueMonthlyLeaves = 0;
+    const baseDateStr = employee.probation_date || employee.date_of_joining;
+    if (baseDateStr) {
+      const today = new Date();
+      const baseDate = new Date(baseDateStr);
+      let monthsDiff = (today.getFullYear() - baseDate.getFullYear()) * 12;
+      monthsDiff -= baseDate.getMonth();
+      monthsDiff += today.getMonth();
+      if (today.getDate() < baseDate.getDate()) {
+        monthsDiff--;
+      }
+      dueMonthlyLeaves = Math.max(0, monthsDiff - 5);
+    }
+    const pendingLeavesLifetime = Math.max(0, dueMonthlyLeaves - paidLeavesFromMonthly);
+
+    // 7. Half Days Used (from joining date to current date)
+    const halfDaysLifetime = leaves
+      .filter(l => 
+        ['approved', 'pending', 'withdrawal_requested'].includes(l.status) &&
+        l.leave_type.toLowerCase().includes('half')
+      )
+      .reduce((sum, l) => sum + 0.5, 0);
+
+    // extra leave/extra compoff = due monthly leaves + total earned compoff - (paid + unpaid leaves)
+    const lifetimeBalance = dueMonthlyLeaves + totalCompOffEarned - (totalPaidLeavesTaken + unpaidLeavesLifetime);
+
+    const totalLeaves = totalPaidLeavesTaken + unpaidLeavesLifetime;
+
+    return {
+      dueMonthlyLeaves,
+      totalCompOffEarned,
+      totalLeaves,
+      lifetimeBalance
+    };
+  };
+
   const summary = calculateSummary();
+  const lifetimeSummary = calculateLifetimeSummary();
 
   const handleExport = () => {
     let csv = 'Date,Day,Status,Leave Type,Paid/Unpaid\n';
@@ -315,42 +398,40 @@ export default function HREmployeeDetail() {
                 <span className="text-purple-800 font-medium">Days Present</span>
                 <span className="font-bold text-purple-900 text-base">{summary.daysPresent}</span>
               </div>
+              <div className="flex justify-between items-center p-2 rounded-xl bg-blue-50 border border-blue-100">
+                <span className="text-blue-800 font-medium">Comp Off Days</span>
+                <span className="font-bold text-blue-900 text-base">{summary.compOffsEarned}</span>
+              </div>
               <div className="flex justify-between items-center p-2 rounded-xl bg-emerald-50 border border-emerald-100">
                 <span className="text-emerald-800 font-medium">Paid Leaves Used</span>
                 <span className="font-bold text-emerald-900 text-base">{summary.paidLeaveUsed}</span>
               </div>
-              <div className="flex justify-between items-center p-2 rounded-xl bg-red-50 border border-red-100">
-                <span className="text-red-800 font-medium">Unpaid Leaves (LOP)</span>
-                <span className="font-bold text-red-900 text-base">{summary.unpaidLeaveUsed}</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-xl bg-amber-50 border border-amber-100">
-                <span className="text-amber-800 font-medium">Pending Leaves</span>
-                <span className="font-bold text-amber-900 text-base">{summary.pendingLeaves}</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-xl bg-purple-50 border border-purple-100">
+              <div className="flex justify-between items-center p-2 rounded-xl bg-purple-50/50 border border-purple-100">
                 <span className="text-purple-800 font-medium">Half Days Used</span>
                 <span className="font-bold text-purple-900 text-base">{summary.halfDaysUsed}</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-xl bg-blue-50 border border-blue-100">
-                <span className="text-blue-800 font-medium">Comp Off Earned</span>
-                <span className="font-bold text-blue-900 text-base">{summary.compOffsEarned}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 h-fit">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex justify-between items-center">
-              <span>Total Balance</span>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-base">{summary.totalBalance}</span>
+              <span>{lifetimeSummary.lifetimeBalance >= 0 ? "Extra Comp Off" : "Extra Leave"}</span>
+              <span className={`px-3 py-1 rounded-full text-base font-bold ${lifetimeSummary.lifetimeBalance >= 0 ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
+                {Math.abs(lifetimeSummary.lifetimeBalance)}
+              </span>
             </h2>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center p-2 rounded-xl bg-blue-50 border border-blue-100">
-                <span className="text-blue-800 font-medium">1. Comp Off Balance</span>
-                <span className="font-bold text-blue-900 text-base">{summary.compOffBalance}</span>
+              <div className="flex justify-between items-center p-2 rounded-xl bg-red-50/50 border border-red-100">
+                <span className="text-red-800 font-medium">Total Leaves Taken</span>
+                <span className="font-bold text-red-900 text-base">{lifetimeSummary.totalLeaves}</span>
               </div>
-              <div className="flex justify-between items-center p-2 rounded-xl bg-indigo-50 border border-indigo-100">
-                <span className="text-indigo-800 font-medium">2. Monthly Balance</span>
-                <span className="font-bold text-indigo-900 text-base">{summary.monthlyBalance}</span>
+              <div className="flex justify-between items-center p-2 rounded-xl bg-amber-50/50 border border-amber-100">
+                <span className="text-amber-800 font-medium">Due Monthly Leaves</span>
+                <span className="font-bold text-amber-900 text-base">{lifetimeSummary.dueMonthlyLeaves}</span>
+              </div>
+              <div className="flex justify-between items-center p-2 rounded-xl bg-blue-50/50 border border-blue-100">
+                <span className="text-blue-800 font-medium">Total Comp Off Earned</span>
+                <span className="font-bold text-blue-900 text-base">{lifetimeSummary.totalCompOffEarned}</span>
               </div>
             </div>
           </div>
@@ -359,3 +440,4 @@ export default function HREmployeeDetail() {
     </div>
   );
 }
+

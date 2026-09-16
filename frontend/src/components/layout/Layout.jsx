@@ -190,6 +190,10 @@ export default function Layout({ children }) {
                 <PlusCircle className="w-5 h-5 mr-3 shrink-0" />
                 Apply on Behalf
               </Link>
+              <Link to="/admin/employee-leaves" className={`flex items-center whitespace-nowrap px-4 py-3 rounded-lg transition-colors text-base font-medium ${isActive('/admin/employee-leaves') ? 'bg-[#7e57c2] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                <FileText className="w-5 h-5 mr-3 shrink-0" />
+                Employee Leaves
+              </Link>
 
               <Link to="/holidays" className={`flex items-center px-4 py-3 rounded-lg transition-all duration-300 text-base font-medium group ${isActive('/holidays') ? 'bg-[#7e57c2] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 <CalendarDays className={`w-5 h-5 mr-3 shrink-0 transition-transform duration-300 ${!isActive('/holidays') && 'group-hover:translate-x-1'}`} />

@@ -21,6 +21,7 @@ import AdminEmployees from './pages/AdminEmployees';
 import AdminEmployeeDetail from './pages/AdminEmployeeDetail';
 import AdminCompOff from './pages/AdminCompOff';
 import AdminApplyLeave from './pages/AdminApplyLeave';
+import AdminEmployeeLeaves from './pages/AdminEmployeeLeaves';
 import Holidays from './pages/Holidays';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
@@ -127,6 +128,7 @@ function App() {
                 <Route path="/admin/verification-queue" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Layout><AdminVerificationQueue /></Layout></ProtectedRoute>} />
                 <Route path="/admin/comp-off" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Layout><AdminCompOff /></Layout></ProtectedRoute>} />
                 <Route path="/admin/apply-leave" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Layout><AdminApplyLeave /></Layout></ProtectedRoute>} />
+                <Route path="/admin/employee-leaves" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Layout><AdminEmployeeLeaves /></Layout></ProtectedRoute>} />
                 <Route path="/admin/away" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Layout><LeaveCalendar /></Layout></ProtectedRoute>} />
 
                 {/* HR Routes */}

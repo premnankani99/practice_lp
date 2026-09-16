@@ -17,20 +17,33 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null); // For details modal
   const [employeeToEdit, setEmployeeToEdit] = useState(null); // For edit modal
-  const [editFormData, setEditFormData] = useState({ full_name: '', email: '', designation: '', phone: '', date_of_joining: '', toggle_manager: false });
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    email: '',
+    designation: '',
+    phone: '',
+    date_of_joining: '',
+    probation_date: '',
+    probation_same_as_joining: false,
+    toggle_manager: false
+  });
   const { data: managers = [] } = useManagers();
   const { user } = useAuth();
 
   const handleEditClick = (emp) => {
     console.log("[Frontend Component] Rendering handleEditClick in EmployeeTable.jsx");
     setEmployeeToEdit(emp);
+    const isSame = emp.probation_date && emp.date_of_joining && 
+                   new Date(emp.probation_date).toISOString().split('T')[0] === new Date(emp.date_of_joining).toISOString().split('T')[0];
     setEditFormData({
       full_name: emp.full_name || '',
       email: emp.email || '',
       designation: emp.designation || '',
       phone: emp.phone || '',
       toggle_manager: emp.managers?.some(m => m.id === user?.id) || false,
-      date_of_joining: emp.date_of_joining ? new Date(emp.date_of_joining).toISOString().split('T')[0] : (emp.created_at ? new Date(emp.created_at).toISOString().split('T')[0] : '')
+      date_of_joining: emp.date_of_joining ? new Date(emp.date_of_joining).toISOString().split('T')[0] : '',
+      probation_date: emp.probation_date ? new Date(emp.probation_date).toISOString().split('T')[0] : '',
+      probation_same_as_joining: isSame || (!emp.probation_date && emp.date_of_joining ? true : false)
     });
   };
 
@@ -160,9 +173,16 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
                   </span>
                 </td>
                 <td className="px-4 py-4 text-gray-500 text-sm whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(emp.date_of_joining || emp.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span>{new Date(emp.date_of_joining || emp.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    {emp.probation_date && (
+                      <span className="text-xs text-[#7e57c2] font-semibold ml-6">
+                        Probation: {new Date(emp.probation_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-4 text-center whitespace-nowrap">
@@ -228,9 +248,16 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
                     <span className="truncate">{emp.email}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
-                      {new Date(emp.date_of_joining || emp.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
+                        {new Date(emp.date_of_joining || emp.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      {emp.probation_date && (
+                        <span className="text-xs text-[#7e57c2] font-semibold ml-6">
+                          Probation: {new Date(emp.probation_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <ShieldCheck className="w-3 h-3" /> Verified
@@ -340,6 +367,12 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
                   <Calendar className="w-5 h-5 text-gray-400 shrink-0" />
                   <span className="text-sm font-medium">Joined {new Date(selectedEmployee.date_of_joining || selectedEmployee.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                 </div>
+                {selectedEmployee.probation_date && (
+                  <div className="flex items-center gap-3 text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <Calendar className="w-5 h-5 text-purple-400 shrink-0" />
+                    <span className="text-sm font-medium">Probation Date: {new Date(selectedEmployee.probation_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
                   <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
                   <span className="text-sm font-medium text-emerald-700 capitalize">Status: {selectedEmployee.verification_status}</span>
@@ -437,14 +470,53 @@ export default function EmployeeTable({ filteredEmployees, isLoading, search, se
                     placeholder="e.g. +91 9876543210"
                   />
                 </div>
-                <div>
+                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
                   <input 
                     type="date" 
                     value={editFormData.date_of_joining} 
-                    onChange={e => setEditFormData({...editFormData, date_of_joining: e.target.value})}
+                    onChange={e => {
+                      const newJoin = e.target.value;
+                      setEditFormData(prev => ({
+                        ...prev,
+                        date_of_joining: newJoin,
+                        probation_date: prev.probation_same_as_joining ? newJoin : prev.probation_date
+                      }));
+                    }}
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-shadow"
                   />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={editFormData.probation_same_as_joining}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setEditFormData(prev => ({
+                          ...prev,
+                          probation_same_as_joining: checked,
+                          probation_date: checked ? prev.date_of_joining : prev.probation_date
+                        }));
+                      }}
+                      className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium text-gray-800">Probation Date same as Date of Joining</span>
+                  </label>
+                  
+                  {!editFormData.probation_same_as_joining && (
+                    <div className="animate-in fade-in duration-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Probation Date</label>
+                      <input 
+                        type="date" 
+                        required={!editFormData.probation_same_as_joining}
+                        value={editFormData.probation_date} 
+                        onChange={e => setEditFormData({...editFormData, probation_date: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-shadow"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
