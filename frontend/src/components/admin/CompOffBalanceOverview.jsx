@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAdminEmployees } from '../../hooks/useAdminEmployees';
 import { useCompOffHistory } from '../../hooks/useCompOff';
 import { Search, TrendingUp, Users, X, Calendar, PlusCircle } from 'lucide-react';
-import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../utils/config';
 
 export default function CompOffBalanceOverview() {
@@ -11,7 +10,6 @@ export default function CompOffBalanceOverview() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   
-  const queryClient = useQueryClient();
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
@@ -19,58 +17,65 @@ export default function CompOffBalanceOverview() {
   const [actionType, setActionType] = useState('add');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [standardHistory, setStandardHistory] = useState([]);
+  const [lopHistory, setLopHistory] = useState([]);
+  const [employeeLeaves, setEmployeeLeaves] = useState([]);
+
+  const fetchLopHistory = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/lop/history?employeeId=${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) setLopHistory(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchEmployeeLeaves = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/leaves/employee/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) setEmployeeLeaves(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   React.useEffect(() => {
     if (selectedEmployee) {
       const token = localStorage.getItem('token');
+      
       fetch(`${API_BASE_URL}/api/admin/adjust-balance/history?employeeId=${selectedEmployee.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
       .then(data => setStandardHistory(data))
       .catch(console.error);
+
+      fetchLopHistory(selectedEmployee.id);
+      fetchEmployeeLeaves(selectedEmployee.id);
     }
   }, [selectedEmployee]);
 
-  const markLopMutation = useMutation({
-    mutationFn: async (data) => {
-      const res = await fetch(`${API_BASE_URL}/api/admin/mark-lop`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to mark LOP');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['verified_employees']);
-      queryClient.invalidateQueries(['lopHistory']);
+  const markLopMutation = {
+    mutate: async (data, { onSuccess, onError }) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/mark-lop`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Failed to mark LOP');
+        const result = await res.json();
+        
+        if (selectedEmployee) fetchLopHistory(selectedEmployee.id);
+        if (onSuccess) onSuccess(result);
+      } catch (error) {
+        if (onError) onError(error);
+      }
     }
-  });
-
-  const { data: lopHistory = [] } = useQuery({
-    queryKey: ['lopHistory', selectedEmployee?.id],
-    queryFn: async () => {
-      if (!selectedEmployee?.id) return [];
-      const res = await fetch(`${API_BASE_URL}/api/admin/lop/history?employeeId=${selectedEmployee.id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      return res.json();
-    },
-    enabled: !!selectedEmployee?.id
-  });
-
-  const { data: employeeLeaves = [] } = useQuery({
-    queryKey: ['employeeLeaves', selectedEmployee?.id],
-    queryFn: async () => {
-      if (!selectedEmployee?.id) return [];
-      const res = await fetch(`${API_BASE_URL}/api/leaves/employee/${selectedEmployee.id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      return res.json();
-    },
-    enabled: !!selectedEmployee?.id
-  });
+  };
 
   const handleAdjustBalance = async () => {
     if (!adjustAmount) return;

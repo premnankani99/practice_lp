@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useVerifiedEmployees } from '../hooks/useLeaves';
 import { API_BASE_URL } from '../utils/config';
 import { useToast } from '../context/ToastContext';
-import { Loader2, Calendar, Shield, AlertCircle } from 'lucide-react';
+import { Loader2, Calendar, Shield, AlertCircle, Filter } from 'lucide-react';
+import { getPaidDays } from '../utils/leaveUtils';
 
 export default function AdminEmployeeLeaves() {
   const { data: employees = [], isLoading: loadingEmployees } = useVerifiedEmployees();
@@ -93,6 +94,13 @@ export default function AdminEmployeeLeaves() {
     const month = String(leaveDate.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   }))).sort((a, b) => b.localeCompare(a)); // Sort descending
+
+  const handleSavePartial = () => {
+    if (partialLeaveConfig) {
+      handleAdjustTreatment(partialLeaveConfig.leaveId, 'partial', partialLeaveConfig.currentPaidDays);
+      setPartialLeaveConfig(null);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto w-full min-h-[calc(100vh-8rem)] flex flex-col font-sans pb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -202,15 +210,7 @@ export default function AdminEmployeeLeaves() {
                       const start = new Date(leave.start_date).toLocaleDateString();
                       const end = new Date(leave.end_date).toLocaleDateString();
                       
-                      const getPaidDays = (leave) => {
-                        if (leave.paid_days !== null && leave.paid_days !== undefined) return leave.paid_days;
-                        if (!leave.leave_type) return leave.total_days;
-                        if (leave.leave_type.includes("Partially Paid")) return 0;
-                        const paidMatch = leave.leave_type.match(/(\d+(\.\d+)?)\s*Paid/i);
-                        if (paidMatch) return parseFloat(paidMatch[1]);
-                        if (leave.leave_type.toLowerCase().includes('unpaid') || leave.leave_type.toLowerCase().includes('lop')) return 0;
-                        return leave.total_days;
-                      };
+
                       const calculatedPaidDays = getPaidDays(leave);
 
                       const isExtraLeave = calculatedPaidDays < leave.total_days || leave.leave_type.toLowerCase().includes('unpaid') || leave.leave_type.toLowerCase().includes('lop');
@@ -302,13 +302,10 @@ export default function AdminEmployeeLeaves() {
                 min="0"
                 max={partialLeaveConfig.totalDays}
                 value={partialLeaveConfig.currentPaidDays ?? 0}
-                onChange={(e) => {
-                  let val = parseInt(e.target.value);
-                  if (isNaN(val)) val = 0;
-                  if (val > partialLeaveConfig.totalDays) val = partialLeaveConfig.totalDays;
-                  if (val < 0) val = 0;
-                  setPartialLeaveConfig(prev => ({ ...prev, currentPaidDays: val }));
-                }}
+                onChange={(e) => setPartialLeaveConfig(prev => ({ 
+                  ...prev, 
+                  currentPaidDays: Math.max(0, Math.min(parseInt(e.target.value) || 0, prev.totalDays)) 
+                }))}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7e57c2] focus:border-transparent outline-none font-bold text-lg text-gray-900"
               />
             </div>
@@ -331,13 +328,7 @@ export default function AdminEmployeeLeaves() {
               >
                 Cancel
               </button>
-              <button 
-                onClick={() => {
-                  handleAdjustTreatment(partialLeaveConfig.leaveId, 'partial', partialLeaveConfig.currentPaidDays);
-                  setPartialLeaveConfig(null);
-                }}
-                className="px-5 py-2.5 text-sm font-bold text-white bg-[#7e57c2] hover:bg-[#6c48a8] rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-purple-500/20"
-              >
+              <button onClick={handleSavePartial} className="px-5 py-2.5 text-sm font-bold text-white bg-[#7e57c2] hover:bg-[#6c48a8] rounded-xl transition-colors shadow-sm shadow-purple-500/20">
                 Save Adjustment
               </button>
             </div>
